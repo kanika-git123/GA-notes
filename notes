@@ -1,0 +1,95 @@
+DAG
+
+1. Runner topology
+2. 
+3. Token scoping - temporary tokens
+
+Internals:
+
+ 
+
+Core idea of the GHA: stop thinking about it as a machine you configure and run. Think of it as a distributed event-driven state machine.
+
+ 
+
+1. Workflow engine -> parses YAML to an DAG. Determines the critical path. Can evaluate conditionals and queues.
+
+2. Compute provisioning -> Provisioned as a container on a shared VM for a standard signle-core runner. Larger runners are dedicated VMs.
+
+3. Runner Daemon -> a daemon process (.NET) that authenticates with GH, pulls the specific job instructions and executes.
+
+4. Tear-down -> once the job is finished, the VM is completely destroyed. It prevents any state leakage.
+
+ 
+
+Self-hosted runners bypass the 6-hour execution limit. This allows the jobs to run for up to 5 days.
+
+ 
+
+---
+
+ 
+
+GHA is stateless, ephemeral isolation -> force you to build differently
+
+Inter-job state sharing by disk is not possible. You have to upload and download the artifacts!
+
+You cannot share the .m2 or node_modules in a mutable way. GHA cache is immutable. If your hash changes, the cache is discarded! Mutable dependency sharing is not possible.
+
+You cannot do native SSH debugging like Jenkins! If the GHA runner fails, the VM is immediately destroyed!
+
+ 
+
+Frictionless fan-out -> massive parallelization
+
+First-class OIDC support
+
+
+============================================================================================================
+
+
+OIDC -> OpenID Connect
+
+ 
+
+How do I access my cloud resources?
+
+ 
+
+Traditionally: access-key and secret key -> long lived credentials
+
+ 
+
+Short term credentials
+
+ 
+
+OIDC helps you access resources without long lived credentials
+
+ 
+
+Flow:
+
+1. GHA -> request the OIDC token from GitHub OIDC provider 
+
+2. GHA -> sends the JWT from earlier step to AWS (AssumeRoleWithWebIdentity)
+
+3. AWS IAM -> verify the JWT passed by GHA -> issue a short-lived STS credentials to the caller (GHA); valid for 1 hr max
+
+4. GHA -> deploy resources to AWS using the short-lived credentials which it got from step 3
+
+ 
+
+ 
+
+GitHub OIDC Provider is called IdP
+
+OIDC Trust means, AWS is configured to trust the GitHub IdP (githubusercontent.com)
+
+audience is the AWS because the aud claim in the JWT provided by IdP has amazonaws.com
+
+subject is a claim (sub) which identifies the GitHub org, repo, branch, or environment of execution
+
+ 
+
+Advantages: no cloud secrets, fine-grained access, automatic expirations
