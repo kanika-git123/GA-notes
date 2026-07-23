@@ -62,3 +62,19 @@ Here, every runner is a pod.
 There is a k8s operator called Actions Runner Controller
 GitHub -> ARC -> Kubernetes -> Runner Pods
 ARC watches the GitHub queue. As soon as you have 200 jobs for example, ARC creates 200 K8s runners (runner-001, runner-002, ...). As the jobs complete, ARC deletes them. This becomes automatic.
+
+
+==================================================
+
+
+GitHub (code) -> Private Runner -> AWS deployment
+
+ 
+
+GitHub (queue) -> Private Runner
+
+Private runner agent -> GitHub OIDC IdP token
+
+Private runner agent -> AWS IAM: exchange IdP token for STS short-lived credentials
+
+Private runner agent -> AWS deployment
