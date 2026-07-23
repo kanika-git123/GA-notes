@@ -1,0 +1,64 @@
+Runners
+
+The runner and GitHub Actions are different!!!
+
+GHA uses runner/s
+that means, you can replace the ephemeral provided runners with your own runners (on-prem, local, cloud)
+
+Dev -> GitHub -> schedule the job
+Question is, where does GH schedules the job?
+
+1. provided ephemeral -> GitHub-hosted runners. Advantages: easy, right out of the box, and works for many projects, zero maintenance, isolated, easy
+disadvantages: very limited customization, internet only, this hosted runner cannot access your on-prem system, limited by the hardware as provided by GitHub, cost.
+Having said all this, this is still fine for many companies.
+2. custom runners -> self-hosted runners. This means, GitHub schedules, and we provide our runners
+To do this, you need to have GitHub runner agent
+This runner registers with GitHub. It must wait! As soon as it receives jobs, it executes them. 
+
+Runner groups:
+Dept -> (fleet of runners)
+
+ML -> (fleet of GPU runners)
+
+Repos -> Allowed runner groups -> allowed machines
+
+
+Production -> prod runner group -> (dedicated runners)
+
+development -> dev runner group -> (dev dedicated runners)
+
+Rather than the traditional persistent runners (like in Jenkins), we favour the ephemeral runners. This makes the builds isolated, no contamination, secure, reproducible. But the cost is no shared memory! That means cache miss and ralated latency and egress costs.
+
+----
+
+Scaling the runners
+
+ 1 dev -> 1 runner. But 100 devs?
+
+For more scale-oriented workloads, auto-scaling is recommended.
+queue grows -> creates more runners
+queue shrinks -> destroys the runners
+
+It is handy in the case of burst jobs
+
+----
+
+Network Isolation
+Some orgs have a policy of not trusting internet for their production systems.
+Instead, they have systems like
+internet -> Github -> VPN -> Private Runner -> internal resources (databases, Kubernetes clusters, Active Directory, internal APIs, etc).
+GitHub cannot access these. So, you have the runner in the private space, which receives the jobs from GitHub and completes the task internally. Thus your internal resources never leave the org.
+
+Some companies use a hybrid strategy:
+For an open source repo -> GitHub-hosted runner
+For internal repo -> self-hosted runner
+
+Also, possible:
+frontend -> GitHub hosted runner
+backend -> private runner
+
+Also possible are the K8s-based runners
+Here, every runner is a pod.
+There is a k8s operator called Actions Runner Controller
+GitHub -> ARC -> Kubernetes -> Runner Pods
+ARC watches the GitHub queue. As soon as you have 200 jobs for example, ARC creates 200 K8s runners (runner-001, runner-002, ...). As the jobs complete, ARC deletes them. This becomes automatic.
