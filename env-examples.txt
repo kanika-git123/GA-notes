@@ -1,0 +1,23 @@
+// Problem: The shell is executing the evaluation
+
+- name: Install dependencies
+
+        run: |
+
+          npm ci
+
+          echo "Processing PR: ${{github.event.pull_request.title}}"
+
+// Solution: GHA is assigning the string (no shell to execute at env), and the shell simply outputs the text
+
+- name: Install dependencies
+
+        env:
+
+          PR_TITLE: ${{github.event.pull_request.title}}
+
+        run: |
+
+          npm ci
+
+          echo "Processing PR: $PR_TITLE"
