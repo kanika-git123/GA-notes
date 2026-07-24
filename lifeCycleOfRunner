@@ -1,0 +1,17 @@
+Life Cycle:
+
+ 
+
+1. Trigger
+
+2. Evaluation and Queueing
+
+3. Runner provisioning
+
+4. Initialisation and env setup
+
+5. Step-by-step execution
+
+6. Post-job clean up and artifact upload
+
+7. Reporting of the status
